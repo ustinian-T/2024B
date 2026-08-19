@@ -13,16 +13,19 @@
 7) 不虚构 p1、批量 N、检测误差率等题目未给参数。
 
 依赖：Python >= 3.9, numpy, pandas, scipy
-运行：
+运行（PyCharm 直接运行本文件即可）：
     python q1_first_question_model.py
 可选：
-    python q1_first_question_model.py --max-n 20000 --output-dir q1_output
+    python q1_first_question_model.py --max-n 20000
     python q1_first_question_model.py --sample-csv your_sampling.csv
+    python q1_first_question_model.py --output-dir D:/your/output
 
 输入抽样 CSV（可选）建议字段：
     batch_id, sample_order, result
 其中 result: 次品=1，合格=0。
 
+默认输出目录：脚本所在目录下 ../结果输出/
+（即 求解代码/第一问/结果输出/），供 MATLAB 绘图复用。
 程序不绘图，只输出后续 MATLAB 绘图/论文制表所需 CSV 与检验报告。
 """
 
@@ -34,6 +37,17 @@ import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+
+# 在 Windows GBK 默认编码的控制台中，print 中文会乱码；
+# 强制以 UTF-8 输出，PyCharm Terminal / 现代 Windows Terminal 均能正确显示。
+# 如果运行环境不支持 reconfigure（极旧 Python），则忽略异常。
+for _stream_name in ("stdout", "stderr"):
+    _stream = getattr(sys, _stream_name, None)
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except Exception:  # pragma: no cover
+            pass
 
 import numpy as np
 import pandas as pd
@@ -1074,8 +1088,12 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="q1_output",
-        help="输出目录，默认脚本所在目录下 q1_output",
+        default="../结果输出",
+        help=(
+            "输出目录，默认相对脚本所在目录的 ../结果输出。"
+            "PyCharm 中直接运行即可把所有 CSV 与检验报告写入"
+            "求解代码/第一问/结果输出/，供 MATLAB 绘图复用。"
+        ),
     )
     parser.add_argument(
         "--sample-csv",
