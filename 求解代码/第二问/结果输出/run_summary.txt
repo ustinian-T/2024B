@@ -17,6 +17,7 @@
 数值/吸收性检查全部通过 = True
 极端情形检查全部通过 = True
 Monte Carlo结果见 validation_mc_summary.csv
+情形4多批次复核见 validation_mc_batches_scenario4.csv 与 validation_mc_batches_summary_scenario4.csv
 
 灵敏度临界值：
  scenario_id        parameter parameter_label  threshold policy_before policy_after  profit_before_at_threshold  profit_after_at_threshold  profit_difference_at_threshold
