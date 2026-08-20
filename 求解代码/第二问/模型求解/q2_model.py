@@ -1088,6 +1088,66 @@ def monte_carlo_validate_scenario(
     return summary, cost_rows, count_rows
 
 
+def monte_carlo_batches_scenario4(
+    p: ScenarioParams,
+    policy: Policy,
+    theory: PolicyEvaluation,
+    n_batches: int,
+    n_per_batch: int,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """以预先固定的 seed=1,...,n_batches 复核情形4的单次随机偏差。"""
+    batch_rows = []
+    for batch in range(1, n_batches + 1):
+        summary, cost_rows, count_rows = monte_carlo_validate_scenario(
+            p, policy, theory, n_orders=n_per_batch, seed=batch
+        )
+        costs = {row["category"]: row["mc_mean"] for row in cost_rows}
+        counts = {row["event"]: row["mc_mean"] for row in count_rows}
+        batch_rows.append({
+            "batch": batch,
+            "seed": batch,
+            "n_sim": n_per_batch,
+            "theoretical_profit": theory.expected_profit,
+            "mc_profit": summary["mc_mean_profit"],
+            "se": summary["mc_profit_se"],
+            "ci_low": summary["mc_profit_ci95_low"],
+            "ci_high": summary["mc_profit_ci95_high"],
+            "z_score": summary["z_score"],
+            "purchase_cost": costs["purchase"],
+            "component_inspection_cost": costs["component_inspection"],
+            "assembly_cost": costs["assembly"],
+            "final_inspection_cost": costs["final_inspection"],
+            "replacement_cost": costs["replacement"],
+            "disassembly_cost": costs["disassembly"],
+            "mean_purchase_1": counts["purchase_1"],
+            "mean_purchase_2": counts["purchase_2"],
+            "mean_assembly_count": counts["assemblies"],
+        })
+
+    batches = pd.DataFrame(batch_rows)
+    batch_sd = float(batches["mc_profit"].std(ddof=1)) if n_batches > 1 else 0.0
+    mean_mc_profit = float(batches["mc_profit"].mean())
+    mean_bias = mean_mc_profit - theory.expected_profit
+    summary = pd.DataFrame([{
+        "n_batches": n_batches,
+        "n_per_batch": n_per_batch,
+        "total_simulations": n_batches * n_per_batch,
+        "theoretical_profit": theory.expected_profit,
+        "mean_mc_profit": mean_mc_profit,
+        "batch_sd": batch_sd,
+        "batch_se": batch_sd / math.sqrt(n_batches),
+        "mean_bias": mean_bias,
+        "relative_bias": mean_bias / theory.expected_profit,
+        "mean_abs_z": float(batches["z_score"].abs().mean()),
+        "max_abs_z": float(batches["z_score"].abs().max()),
+        "coverage_rate": float(
+            ((batches["ci_low"] <= theory.expected_profit)
+             & (theory.expected_profit <= batches["ci_high"])).mean()
+        ),
+    }])
+    return batches, summary
+
+
 # ============================================================
 # 8. 灵敏度分析
 # ============================================================
@@ -1439,11 +1499,32 @@ def run_all(args: argparse.Namespace) -> None:
         save_csv(mc_cost_df, output_dir / "validation_mc_cost_breakdown.csv")
         save_csv(mc_count_df, output_dir / "validation_mc_event_counts.csv")
 
+        # 情形4原单次区间曾偶然漏覆盖理论值；用运行前固定的多批次方案复核，
+        # 不更换种子追求“通过”，也不改变原六情形单次验证结果。
+        p4, pol4, theory4 = optimal_evaluations[4]
+        mc_batches4_df, mc_batches4_summary_df = monte_carlo_batches_scenario4(
+            p4, pol4, theory4,
+            n_batches=args.mc_batches_scenario4,
+            n_per_batch=args.mc_batch_orders,
+        )
+        save_csv(
+            mc_batches4_df,
+            output_dir / "validation_mc_batches_scenario4.csv",
+        )
+        save_csv(
+            mc_batches4_summary_df,
+            output_dir / "validation_mc_batches_summary_scenario4.csv",
+        )
+
         print("\nMonte Carlo 独立验证：")
         print(mc_summary_df[[
             "scenario_id", "policy4", "n_orders", "theory_profit", "mc_mean_profit",
             "mc_profit_ci95_low", "mc_profit_ci95_high", "theory_in_mc_95ci", "z_score"
         ]].to_string(index=False, float_format=lambda x: f"{x:.6f}"))
+        print("\n情形4多批次 Monte Carlo 复核：")
+        print(mc_batches4_summary_df.to_string(
+            index=False, float_format=lambda x: f"{x:.6f}"
+        ))
 
     # ---------- 8. 灵敏度：情形1，题目实际区间 ----------
     base = SCENARIOS[0]
@@ -1492,6 +1573,10 @@ def run_all(args: argparse.Namespace) -> None:
         f.write(f"极端情形检查全部通过 = {bool(extreme_df['pass'].all())}\n")
         if not args.skip_mc:
             f.write("Monte Carlo结果见 validation_mc_summary.csv\n")
+            f.write(
+                "情形4多批次复核见 validation_mc_batches_scenario4.csv 与 "
+                "validation_mc_batches_summary_scenario4.csv\n"
+            )
         f.write("\n灵敏度临界值：\n")
         if threshold_df.empty:
             f.write("指定区间内无策略切换。\n")
@@ -1519,6 +1604,14 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="每个最优策略的Monte Carlo订单数，手册建议至少1e5，默认100000"
     )
     parser.add_argument(
+        "--mc-batches-scenario4", type=int, default=10,
+        help="情形4独立Monte Carlo复核批次数，默认10（固定seed=1,...,10）"
+    )
+    parser.add_argument(
+        "--mc-batch-orders", type=int, default=100_000,
+        help="情形4每个复核批次的订单数，默认100000"
+    )
+    parser.add_argument(
         "--sens-points", type=int, default=101,
         help="每个单参数灵敏度扫描网格点数，默认101；临界值随后用二分法精确细化"
     )
@@ -1542,11 +1635,16 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 
     if args.quick:
         args.mc_orders = 10_000
+        args.mc_batch_orders = 10_000
         args.sens_points = 51
         args.phase_points = 21
 
     if args.mc_orders <= 0:
         parser.error("--mc-orders 必须为正整数")
+    if args.mc_batches_scenario4 <= 0:
+        parser.error("--mc-batches-scenario4 必须为正整数")
+    if args.mc_batch_orders <= 0:
+        parser.error("--mc-batch-orders 必须为正整数")
     if args.sens_points < 21:
         parser.error("--sens-points 建议至少21")
     if args.phase_points < 11:

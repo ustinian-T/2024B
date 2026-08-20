@@ -1,0 +1,2 @@
+﻿n_batches,n_per_batch,total_simulations,theoretical_profit,mean_mc_profit,batch_sd,batch_se,mean_bias,relative_bias,mean_abs_z,max_abs_z,coverage_rate
+10,100000,1000000,14.75,14.758302999999824,0.049219105154773395,0.015564447668441821,0.008302999999823868,0.000562915254225347,0.9864070487577076,1.730443308858686,1.0
