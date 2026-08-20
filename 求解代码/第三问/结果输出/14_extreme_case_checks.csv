@@ -1,0 +1,5 @@
+﻿case,passed,best_policy_bits,best_profit,expected_behavior
+all_defect_rates_zero,True,0000000000000000,104.0,零件、半成品、成品均无需检测；拆解位因无失败可出现等价
+very_large_replacement_loss,True,1111111100011111,59.369200000000006,成品检测 y_F=1
+very_large_disassembly_cost,True,1111111111100000,39.34156378600824,H1/H2/H3/F拆解位均为0
+very_large_component_inspection_cost,True,0000000011100001,38.01707056851092,8个零件检测位均为0

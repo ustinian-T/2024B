@@ -1,0 +1,68 @@
+2024 高教社杯 B题 问题三 —— Python 求解结果摘要
+========================================================================
+运行耗时: 15.420 s
+静态策略数: 65536
+最优16位策略: 1111111111111101
+单位期望成本: 139.7777777778 元
+单位期望利润: 60.2222222222 元
+次优策略: 1101111111111101
+次优利润: 60.0422222222 元
+最优-次优利润差 Δ: 0.1800000000 元
+
+最优策略解释：
+  C1~C8：全部检测
+  H1~H3：全部检测；检测到次品后全部拆解
+  F：不做出厂检测；消费者退回次品后拆解
+
+树形DP交叉检查：
+  tree best = 1111111111111101, profit = 60.2222222222
+
+200,000笔向量化Monte Carlo：
+  mean=60.179945, sd=25.291730, SE=0.056554
+  95%CI=[60.069099, 60.290791]
+
+逐事件Monte Carlo：
+  n=10000, mean=60.119500
+  95%CI=[59.619441, 60.619559]
+
+模型检验：
+  [PASS] manual_target_policy: 1111111111111101 | target=1111111111111101
+  [PASS] manual_target_cost: 139.77777777777777 | target=139.77777777777777
+  [PASS] manual_target_profit: 60.22222222222223 | target=60.22222222222222
+  [PASS] hand_closed_form_vs_exact: 0.0 | target=<1e-10
+  [PASS] tree_dp_vs_flat_policy: 1111111111111101 | target=1111111111111101
+  [PASS] tree_dp_vs_flat_profit: 0.0 | target=<1e-10
+  [PASS] cost_breakdown_sum_vs_scalar: 2.842170943040401e-14 | target=<1e-10
+  [PASS] vectorized_mc_ci_contains_theory: [60.069099, 60.290791] | target=contains 60.222222
+  [PASS] generic_event_mc_ci_contains_theory: [59.619441, 60.619559] | target=contains 60.222222
+  [PASS] mc_event_count_mean_component_attempts_each: 0.00022013888888894328 | target=abs error < 0.01
+  [PASS] mc_event_count_mean_semi_attempts_total: 0.001691666666666869 | target=abs error < 0.01
+  [PASS] mc_event_count_mean_semi_failures_total: 0.0016916666666666469 | target=abs error < 0.01
+  [PASS] mc_event_count_mean_final_attempts: 0.00010388888888890335 | target=abs error < 0.01
+  [PASS] mc_event_count_mean_replacements: 0.0001038888888888756 | target=abs error < 0.01
+  [PASS] mc_event_count_mean_final_disassemblies: 0.0001038888888888756 | target=abs error < 0.01
+
+极端情形检验：
+  [PASS] all_defect_rates_zero: 0000000000000000
+  [PASS] very_large_replacement_loss: 1111111100011111
+  [PASS] very_large_disassembly_cost: 1111111111100000
+  [PASS] very_large_component_inspection_cost: 0000000011100001
+
+关键灵敏度阈值：
+  replacement_loss_L: actual=40, threshold=60, baseline=不检测
+  final_process_defect_pF: actual=0.1, threshold=0.15, baseline=不检测
+  inspect_cost_C1: actual=1, threshold=2.22222, baseline=检测
+  inspect_cost_C2: actual=1, threshold=2.22222, baseline=检测
+  inspect_cost_C3: actual=2, threshold=2.22222, baseline=检测
+  inspect_cost_C4: actual=1, threshold=2.22222, baseline=检测
+  inspect_cost_C5: actual=1, threshold=2.22222, baseline=检测
+  inspect_cost_C6: actual=2, threshold=2.22222, baseline=检测
+  inspect_cost_C7: actual=1, threshold=2.22222, baseline=检测
+  inspect_cost_C8: actual=2, threshold=2.22222, baseline=检测
+  inspect_cost_H1: actual=4, threshold=7.16049, baseline=检测
+  inspect_cost_H2: actual=4, threshold=7.16049, baseline=检测
+  inspect_cost_H3: actual=4, threshold=7.16049, baseline=检测
+  disassembly_cost_H1: actual=6, threshold=28.8889, baseline=拆解
+  disassembly_cost_H2: actual=6, threshold=28.8889, baseline=拆解
+  disassembly_cost_H3: actual=6, threshold=25.5556, baseline=拆解
+  disassembly_cost_F: actual=10, threshold=125.333, baseline=拆解
