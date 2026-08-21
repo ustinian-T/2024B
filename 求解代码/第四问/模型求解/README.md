@@ -115,9 +115,15 @@ python main.py --no-flat-cross-check
 - `q4_topk.csv`
 - `q4_bootstrap.csv`
 - `q4_information_curve.csv`
-- `q4_phase_map.csv`
+- `q4_phase_map_nominal.csv` / `q4_phase_map_robust90.csv` / `q4_phase_map_robust95.csv`
+- `q4_phase_map_nominal_switch_points.csv` / `q4_phase_map_robust90_switch_points.csv` / `q4_phase_map_robust95_switch_points.csv`
+- `q4_robustness_decomposition.csv`
+- `q4_decode_diff_smoke.csv`
+- `quality_intervals_global_family_d30_diagnostic.csv`
 - `validation_q2_monotonicity.csv`
 - `validation_q3_monotonicity.csv`
+- `validation_robust_corner_check_q2.csv`
+- `validation_robust_corner_check_q3.csv`
 
 MATLAB 后续只读这些 CSV 画图，不重新实现求解公式。
 

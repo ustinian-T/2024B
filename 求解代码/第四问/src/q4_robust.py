@@ -83,8 +83,8 @@ def solve_q4_q2(
             "scenario_id": sid,
             "risk_level": "nominal",
             "robust_method": "point_estimate_reference",
-            "policy4": best.code4,
-            "policy6": best.code6,
+            "policy4": _pad_q2_policy4(best.code4),
+            "policy6": _pad_q2_policy6(best.code6),
             "expected_cost": best.expected_cost,
             "expected_profit": best.expected_profit,
             "gap": float(rank.iloc[0]["primary_policy_gap"]),
@@ -113,7 +113,8 @@ def solve_q4_q2(
             gap = float(rank.iloc[0]["primary_policy_gap"])
             result_rows.append({
                 "scenario_id": sid, "risk_level": risk, "robust_method": method,
-                "policy4": best.code4, "policy6": best.code6,
+                "policy4": _pad_q2_policy4(best.code4),
+                "policy6": _pad_q2_policy6(best.code6),
                 "expected_cost": best.expected_cost,
                 "expected_profit": best.expected_profit, "gap": gap,
                 "family_size": 3, "data_source": data_source,
@@ -129,6 +130,24 @@ def solve_q4_q2(
         pd.concat(top_rows, ignore_index=True) if top_rows else pd.DataFrame(),
         pd.concat(mono_rows, ignore_index=True) if mono_rows else pd.DataFrame(),
     )
+
+
+def _pad_q2_policy4(code: str) -> str:
+    """确保 Q2 4 位策略码保留前导零（防止 csv 被读成整数）。"""
+    code = str(code).strip()
+    return code.zfill(4)
+
+
+def _pad_q2_policy6(code: str) -> str:
+    """确保 Q2 6 位策略码保留前导零。"""
+    code = str(code).strip()
+    return code.zfill(6)
+
+
+def _pad_q3_policy16(code: str) -> str:
+    """确保 Q3 16 位策略码保留前导零。"""
+    code = str(code).strip()
+    return code.zfill(16)
 
 
 def solve_q4_q3(
@@ -153,7 +172,7 @@ def solve_q4_q3(
     row = {
         "risk_level": "nominal",
         "robust_method": "point_estimate_reference",
-        "policy16": code,
+        "policy16": _pad_q3_policy16(code),
         "expected_cost": detail.expected_cost,
         "expected_profit": profit,
         "gap": float(top.iloc[0]["best_second_gap"]),
@@ -191,7 +210,7 @@ def solve_q4_q3(
         row = {
             "risk_level": risk,
             "robust_method": method,
-            "policy16": code,
+            "policy16": _pad_q3_policy16(code),
             "expected_cost": float(200 - profit),
             "expected_profit": profit,
             "gap": float(top.iloc[0]["best_second_gap"]),
@@ -273,13 +292,14 @@ def robustness_decomposition_q2(
             "scenario_id": sid,
             "family_size": family_size,
             "data_source": data_source,
-            "pi_N_code6": pi_N_code, "pi_R_code6": pi_R_code,
+            "pi_N_code6": _pad_q2_policy6(pi_N_code),
+            "pi_R_code6": _pad_q2_policy6(pi_R_code),
             "P_NN": P_NN, "P_RN": P_RN, "P_NU": P_NU, "P_RU": P_RU,
             "PoR_P_NN_minus_P_RN": P_NN - P_RN,
             "RobustGain_P_RU_minus_P_NU": P_RU - P_NU,
             "PDE_P_NN_minus_P_NU": P_NN - P_NU,
             "WG_P_RU": P_RU,
-            "switched_strategy": pi_N_code != pi_R_code,
+            "switched_strategy": _pad_q2_policy6(pi_N_code) != _pad_q2_policy6(pi_R_code),
         })
     return pd.DataFrame(rows)
 
@@ -314,14 +334,14 @@ def robustness_decomposition_q3(
         "scope": "Q3",
         "family_size": family_size,
         "data_source": data_source,
-        "pi_N_policy16": pi_N,
-        "pi_R_policy16": pi_R,
+        "pi_N_policy16": _pad_q3_policy16(pi_N),
+        "pi_R_policy16": _pad_q3_policy16(pi_R),
         "P_NN": P_NN, "P_RN": P_RN, "P_NU": P_NU, "P_RU": P_RU,
         "PoR_P_NN_minus_P_RN": P_NN - P_RN,
         "RobustGain_P_RU_minus_P_NU": P_RU - P_NU,
         "PDE_P_NN_minus_P_NU": P_NN - P_NU,
         "WG_P_RU": P_RU,
-        "switched_strategy": pi_N != pi_R,
+        "switched_strategy": _pad_q3_policy16(pi_N) != _pad_q3_policy16(pi_R),
     }])
 
 
