@@ -1,0 +1,15 @@
+﻿scope,from_risk_level,to_risk_level,from_code,to_code,n_changes,diff_summary
+Q2_S1,nominal,robust90,100111,110111,1,x2:0->1
+Q2_S1,nominal,robust95,100111,110111,1,x2:0->1
+Q2_S2,nominal,robust90,110111,110111,0,
+Q2_S2,nominal,robust95,110111,110111,0,
+Q2_S3,nominal,robust90,101111,111111,1,x2:0->1
+Q2_S3,nominal,robust95,101111,111111,1,x2:0->1
+Q2_S4,nominal,robust90,111111,111111,0,
+Q2_S4,nominal,robust95,111111,111111,0,
+Q2_S5,nominal,robust90,010111,011111,1,y:0->1
+Q2_S5,nominal,robust95,010111,011111,1,y:0->1
+Q2_S6,nominal,robust90,000000,100000,1,x1:0->1
+Q2_S6,nominal,robust95,000000,100000,1,x1:0->1
+Q3,nominal,robust90,1111111111111101,1111111111111111,1,y_F:0->1
+Q3,nominal,robust95,1111111111111101,1111111111111111,1,y_F:0->1

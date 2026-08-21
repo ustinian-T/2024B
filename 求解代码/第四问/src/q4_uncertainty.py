@@ -211,11 +211,27 @@ def upper_for_record(r: SampleRecord, confidence: float) -> float:
     raise ValueError(f"unknown sample design: {r.sample_design}")
 
 
-def build_interval_table(records: Sequence[SampleRecord], global_confidences=(0.90, 0.95)) -> pd.DataFrame:
-    """对一个 Q2 情形(d=3)或 Q3 系统(d=12)构造 componentwise 与 simultaneous 上界。"""
+def build_interval_table(
+    records: Sequence[SampleRecord],
+    global_confidences: Sequence[float] = (0.90, 0.95),
+    family_size: int | None = None,
+) -> pd.DataFrame:
+    """对一个 Q2 情形(d=3)或 Q3 系统(d=12)构造 componentwise 与 simultaneous 上界。
+
+    family_size 控制 Bonferroni 同时修正的族元素个数。
+    默认 family_size = len(records)，即调用方传入的 records 应已经按 Q2 情形或 Q3 系统分桶。
+
+    Q4 稳健层调用方：
+    - Q2 每个情形 d = 3（p1, p2, pf）；
+    - Q3 系统    d = 12（8 raw + 4 process）。
+    不要把 30 条记录一起按 d=30 做 Bonferroni 修正，那样会过度保守。
+    """
     if not records:
         return pd.DataFrame()
-    d = len(records)
+    if family_size is None:
+        family_size = len(records)
+    if family_size <= 0:
+        raise ValueError("family_size 必须为正整数")
     rows = []
     for r in records:
         row = {
@@ -231,11 +247,26 @@ def build_interval_table(records: Sequence[SampleRecord], global_confidences=(0.
         for gamma in global_confidences:
             key = int(round(100 * gamma))
             row[f"U_component_{key}"] = upper_for_record(r, gamma)
-            per_conf = simultaneous_component_confidence(gamma, d)
+            per_conf = simultaneous_component_confidence(gamma, family_size)
             row[f"per_parameter_conf_{key}"] = per_conf
             row[f"U_simultaneous_{key}"] = upper_for_record(r, per_conf)
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+def build_global_family_diagnostic(
+    records: Sequence[SampleRecord],
+    global_confidences: Sequence[float] = (0.90, 0.95),
+    family_size: int = 30,
+) -> pd.DataFrame:
+    """全实验族同时置信上界（d=30 诊断）。
+
+    仅作为"把所有 30 条抽样记录视作一个同时族"的极端保守诊断。
+    不得用于默认 Q4 稳健重优化；不得与 per-scope 结果混用。
+    """
+    df = build_interval_table(records, global_confidences, family_size=family_size)
+    df["scope_diagnostic"] = "global_family_d30"
+    return df
 
 
 def simulate_q1_stop(
