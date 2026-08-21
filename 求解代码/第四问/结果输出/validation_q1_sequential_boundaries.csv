@@ -1,0 +1,4 @@
+﻿check,actual,criterion,PASS
+accept_boundary_n34_k0,10.015605145524672,10.0,True
+reject_boundary_n2_k2,36.99999999999998,20.0,True
+inverted_U90_n34_k0,0.09994580768881857,0.1,True

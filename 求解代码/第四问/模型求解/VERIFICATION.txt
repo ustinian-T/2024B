@@ -1,0 +1,23 @@
+2024 B题 问题四 Python 项目验收记录
+
+1) python -m compileall -q . : PASS
+2) pytest -q : 6 passed
+3) python main.py : PASS
+   - Q2 regression: PASS
+   - Q2 z=0 Bellman vs closed form: PASS
+   - Q3 layered vs flat 65536 regression: PASS
+   - Q3 hand-check cost decomposition: PASS
+   - fixed-sample CP exact coverage: PASS
+   - Q1 sequential boundary regression: PASS
+   - sequential confidence-sequence MC coverage: PASS
+4) Full robust branch software-path test with temporary TEST_ONLY fixed-sample fixture: PASS
+   - all 6 Q2 scenarios solved
+   - Q3 solved
+   - Q2 monotonicity audit PASS
+   - Q3 monotonicity audit PASS
+   - bootstrap branch executed
+
+IMPORTANT:
+The temporary TEST_ONLY fixture was created only to test software execution and is NOT a problem parameter,
+NOT a modeling assumption, and NOT included as a Q4 numerical conclusion. Real Q4 90%/95% robust results
+require the actual sample_design, n and k for every quality parameter.
