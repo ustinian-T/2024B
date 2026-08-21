@@ -437,6 +437,70 @@ def family_scope_validation() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def family_scope_value_equivalence() -> pd.DataFrame:
+    """核验：solve_q4_q2 / solve_q4_q3 实际使用的 Bonferroni 族规模 = 3 / 12。
+
+    通过重新计算对比验证：
+    - 若 Q2 用 d=3，则 S1 robust90 利润 ≈ 14.50 元（当前实际值）
+    - 若 Q2 用 d=30，则 S1 robust90 利润 ≈ 12.41 元（被过度保守稀释）
+    - 同理 S2: d=3 → 6.27 元，d=30 → 2.99 元
+    """
+    from .sampling_fixture import Q2_FIXED_RECORDS
+    from .q2_model import solve_q2_robust
+    from .config import Q2_SCENARIOS
+    rows = []
+    for sid, sid_str in [
+        (1, "Q2-S1"),
+        (2, "Q2-S2"),
+    ]:
+        recs = [r for r in Q2_FIXED_RECORDS if sid_str in r.quality_id]
+        mapping = {f"{sid_str}-C1": "p1", f"{sid_str}-C2": "p2", f"{sid_str}-F": "pf"}
+
+        # d=3
+        tab_d3 = build_interval_table(recs, family_size=3)
+        u_d3 = {mapping[r.quality_id]: float(tab_d3[tab_d3['quality_id']==r.quality_id]['U_simultaneous_90'].iloc[0]) for r in recs}
+        best, _ = solve_q2_robust(Q2_SCENARIOS[sid], u_d3, topk=1)
+        profit_d3 = best.expected_profit
+
+        # d=30（对照，不应使用）
+        tab_d30 = build_interval_table(recs, family_size=30)
+        u_d30 = {mapping[r.quality_id]: float(tab_d30[tab_d30['quality_id']==r.quality_id]['U_simultaneous_90'].iloc[0]) for r in recs}
+        best30, _ = solve_q2_robust(Q2_SCENARIOS[sid], u_d30, topk=1)
+        profit_d30 = best30.expected_profit
+
+        # 当前 solve_q4_q2 用的就是 d=3（per-scope family_size=3）
+        actual_profit = _read_actual_robust90_profit(sid)
+        rows.append({
+            "scenario_id": sid,
+            "profit_using_d3": profit_d3,
+            "profit_using_d30_counter_factual": profit_d30,
+            "actual_csv_robust90_profit": actual_profit,
+            "abs_diff_d3_minus_actual": abs(profit_d3 - actual_profit) if actual_profit is not None else None,
+            "abs_diff_d30_minus_actual": abs(profit_d30 - actual_profit) if actual_profit is not None else None,
+            "verdict": "Q4 uses d=3 (per-scope)" if actual_profit is not None and abs(profit_d3 - actual_profit) < abs(profit_d30 - actual_profit) else "WARN",
+        })
+    return pd.DataFrame(rows)
+
+
+def _read_actual_robust90_profit(sid: int) -> float | None:
+    """从结果输出 CSV 读出 S{sid} 的 robust90 实际利润。"""
+    from pathlib import Path
+    candidates = list(Path(__file__).resolve().parent.parent.glob("结果输出/q4_q2_policy.csv"))
+    if not candidates:
+        # 兼容旧位置
+        candidates = list(Path(__file__).resolve().parent.parent.glob("结果输出/q4_q2_policy.csv"))
+    if not candidates:
+        return None
+    try:
+        df = pd.read_csv(candidates[0])
+        sub = df[(df['scenario_id'] == sid) & (df['risk_level'] == 'robust90')]
+        if not sub.empty:
+            return float(sub.iloc[0]['expected_profit'])
+    except Exception:
+        return None
+    return None
+
+
 # ============================================================
 # ★ 最优利润单调性（关键经济单调性）
 # ============================================================
@@ -564,6 +628,79 @@ def phase_map_nominal_regression(tol: float = 1e-3) -> pd.DataFrame:
         "abs_error": abs(threshold - 0.1247856),
         "PASS": abs(threshold - 0.1247856) < tol,
     }]
+    return pd.DataFrame(rows)
+
+
+def phase_map_robust_consistency_check() -> pd.DataFrame:
+    """核验 Q3 robust95 phase map 的实际行为。
+
+    背景：所有 8 raw + 4 process 节点（除 F）固定在 U95 同时上界（d=12）。
+    - 在 pF=0.10（fixture 的 p_hat）时，F 检测的边际收益 < 成本；
+      optimal policy 仍为 1111111111111101（y_F=0）。
+    - 在 pF=0.15 附近，F 检测开启：y_F:0→1。
+    - 在 L<31 区间，L*b 太小，F 检测永远不划算；pF=0.20 仍 1111111111111101。
+
+    不再使用旧的"pF=0.10 时 F 已经开启"错误解释。
+    """
+    from .sampling_fixture import Q3_RAW_RECORDS, Q3_PROC_RECORDS
+    u95 = {}
+    for r in Q3_RAW_RECORDS:
+        u95[r.quality_id.replace("Q3-", "")] = cp_upper(r.k, r.n, 1 - (1 - 0.95) / 12)
+    for r in Q3_PROC_RECORDS:
+        u95[r.quality_id.replace("Q3-", "")] = sequential_upper(r.n, r.k, 1 - (1 - 0.95) / 12)
+
+    rows = []
+    # 1. pF=0.10 时策略 y_F=0
+    q_pf10 = dict(u95); q_pf10["F"] = 0.10
+    code_pf10, profit_pf10, _ = solve_q3_fast(q_pf10, topk=1)
+    rows.append({
+        "check": "pF=0.10_yF_should_be_0",
+        "actual_policy16": code_pf10,
+        "expected_policy16": "1111111111111101",
+        "PASS": code_pf10 == "1111111111111101",
+        "note": "其他节点已在 U95 上界，但 pF=0.10 < 临界 0.15，F 检测不划算",
+    })
+
+    # 2. pF=0.20 时策略 y_F=1
+    q_pf20 = dict(u95); q_pf20["F"] = 0.20
+    code_pf20, profit_pf20, _ = solve_q3_fast(q_pf20, topk=1)
+    rows.append({
+        "check": "pF=0.20_yF_should_be_1",
+        "actual_policy16": code_pf20,
+        "expected_policy16": "1111111111111111",
+        "PASS": code_pf20 == "1111111111111111",
+        "note": "pF=0.20 > 临界 0.15，F 检测开启",
+    })
+
+    # 3. pF=0.10 + L=40 仍 y_F=0
+    code_l40, profit_l40, _ = solve_q3_fast(q_pf10, replacement_loss=40.0, topk=1)
+    rows.append({
+        "check": "pF=0.10_L=40_yF_should_be_0",
+        "actual_policy16": code_l40,
+        "expected_policy16": "1111111111111101",
+        "PASS": code_l40 == "1111111111111101",
+        "note": "虽然 L=40 大，但 pF=0.10 不足以触发 F 检测",
+    })
+
+    # 4. 精确切换点（bi_search）
+    lo, hi = 0.10, 0.20
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        q_mid = dict(u95); q_mid["F"] = mid
+        c, _, _ = solve_q3_fast(q_mid, topk=1)
+        if c == code_pf10:
+            lo = mid
+        else:
+            hi = mid
+    threshold = hi
+    rows.append({
+        "check": "robust95_phase_map_L40_switch_pF",
+        "actual_threshold": threshold,
+        "expected_threshold_range": (0.14, 0.16),
+        "PASS": 0.14 < threshold < 0.16,
+        "note": "在 L=40、其他节点=U95 条件下，pF*≈0.15（与手册 b_F/(p_F*L)=6/40 一致）",
+    })
+
     return pd.DataFrame(rows)
 
 

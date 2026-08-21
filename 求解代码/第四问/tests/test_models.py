@@ -14,8 +14,10 @@ from src.q4_validation import (
     q1_sequential_boundary_validation,
     sequential_cs_coverage_validation,
     family_scope_validation,
+    family_scope_value_equivalence,
     optimal_profit_monotonicity_validation,
     phase_map_nominal_regression,
+    phase_map_robust_consistency_check,
     robust_corner_check_q2,
     robust_corner_check_q3,
     decode_diff_smoke,
@@ -67,6 +69,26 @@ def test_family_scope():
     assert "global_family_d30_diagnostic" in scopes
 
 
+def test_family_scope_value_equivalence():
+    """验证 Q4 实际用的 Bonferroni 族规模是 d=3（Q2 per-scope），不是 d=30。"""
+    df = family_scope_value_equivalence()
+    # 每一行的 d=3 利润应更接近实际 CSV 值
+    for _, row in df.iterrows():
+        d3_diff = row["abs_diff_d3_minus_actual"]
+        d30_diff = row["abs_diff_d30_minus_actual"]
+        assert d3_diff is not None and d30_diff is not None
+        assert d3_diff < d30_diff, (
+            f"Q2-S{row['scenario_id']}：d=3 利润 {row['profit_using_d3']:.4f} 与实际 "
+            f"{row['actual_csv_robust90_profit']:.4f} 差距 {d3_diff:.4f}；"
+            f"d=30 利润 {row['profit_using_d30_counter_factual']:.4f} 差距 {d30_diff:.4f}。"
+            f"如果 d=30 更接近，说明程序误用了全局族规模。"
+        )
+        # 数值差异应小于 0.01 元（机器精度内）
+        assert d3_diff < 1e-2
+    # 所有行的 verdict 必须是 d=3
+    assert (df["verdict"] == "Q4 uses d=3 (per-scope)").all()
+
+
 def test_optimal_profit_monotonicity():
     """最优利润随 L 或 pF 单调非增。"""
     df = optimal_profit_monotonicity_validation()
@@ -77,6 +99,13 @@ def test_phase_map_nominal_regression():
     """Q3 nominal phase map 在 L=40 时首次切换应在 pF ≈ 0.124786 附近。"""
     df = phase_map_nominal_regression()
     assert df["PASS"].all()
+
+
+def test_phase_map_robust_consistency():
+    """Q3 robust95 phase map 行为核验：pF=0.10 y_F=0、pF=0.20 y_F=1、L=40 切换 pF≈0.15。"""
+    df = phase_map_robust_consistency_check()
+    assert df["PASS"].all()
+    assert len(df) == 4
 
 
 def test_robust_corner_q2():

@@ -186,8 +186,8 @@
 ```bash
 cd 求解代码/第四问/模型求解
 python -m compileall -q ..
-python -m pytest -q ..  # 15 passed in 42.97s
-python main.py --bootstrap-start 64 --bootstrap-max 128
+python -m pytest -q ..  # 17 passed
+python main.py --bootstrap-start 64 --bootstrap-max 512
 ```
 
 **新增输出文件清单**（与之前相比）：
@@ -228,8 +228,8 @@ python main.py --bootstrap-start 64 --bootstrap-max 128
 
 | 字段 | 修改前（粗） | 修改后（新） |
 |---|---|---|
-| Q2 n=100,k=10,d=3,95% | 0.17117（d=30 混合计算） | 0.1830790108 ✓ |
-| Q3 n=100,k=10,d=12,95% | 0.19364（被 30 条混合稀释） | 0.2046530170 ✓ |
+| Q2 n=100,k=10,95% | 0.2177122543（d=30 混合计算） | 0.1830790108（d=3）✓ |
+| Q3 n=100,k=10,95%（raw） | 0.2177122543（d=30 混合计算） | 0.2046530170（d=12）✓ |
 | Q3 nominal phase map L=40 | 0.1509 | **0.124786** ✓ |
 | Q2 closed-form 验证行数 | "24"（手写） | **48**（自动） |
 | Q3 单调性审计行数 | "24 / 48"（手写矛盾） | **72**（自动） |
@@ -242,11 +242,11 @@ python main.py --bootstrap-start 64 --bootstrap-max 128
 | 字段 | 修改前 | 修改后 |
 |---|---|---|
 | Q2-S1 nominal | 1001 (18.84) | 1001 (18.84) |
-| Q2-S1 robust95 | 1101 (13.84) | 1101 (13.84) |
+| Q2-S1 robust95 | 1101 (11.83) | 1101 (13.84) |
 | Q2-S3 nominal | 1011 (16.47) | 1011 (16.47) |
-| Q2-S3 robust95 | 1111 (11.39) | 1111 (11.39) |
+| Q2-S3 robust95 | 1111 (9.47) | 1111 (11.39) |
 | Q3 nominal | 1111111111111101 (60.22) | 1111111111111101 (60.22) |
-| Q3 robust95 | 1111111111111111 (36.75) | 1111111111111111 (36.75) |
+| Q3 robust95 | 1111111111111111 (34.24) | 1111111111111111 (36.75) |
 | Q3 nominal PoR | n/a | **2.2222 元** |
 | Q3 robust95 Robust Gain | n/a | **2.2623 元** |
 | Q3 nominal phase map L=40 pF* | 0.1509（错误） | **0.124786** ✓ |
@@ -255,8 +255,8 @@ python main.py --bootstrap-start 64 --bootstrap-max 128
 | Q2 S3 Rπ95 | 0.80 | 0.7891 |
 | Q2 S6 Rπ95 | 0.61 | 0.6094 |
 
-> **重要观察**：Q2/Q3 nominal 结果（= Q2/Q3 手册值）保持不变；robust95 切换策略保持不变（说明 8 个 0-1 决策位的策略空间在 d=3/d=12 修正下已收敛）。主要变化是：
-> 1. 同时置信区间变窄 → 一些原来"切换"的策略现在回到 nominal；
+> **重要观察**：Q2/Q3 nominal 结果（= Q2/Q3 手册值）保持不变。d=30 → d=3/d=12 使同时置信区间收窄，所有 robust90/95 利润值上升（Q3 robust95 从 34.24 → 36.75 元），且 S6 的 robust90/95 策略从 `110000` 变为 `100000`。主要变化是：
+> 1. 同时置信区间收窄 → 稳健解利润上升，S6 策略切换；
 > 2. Q3 nominal phase map 的真实阈值从 0.1509 → **0.124786**（MD 之前估算错误）；
 > 3. 报告呈现的所有文字、数值、切换点全部由程序计算，不再手工写。
 
@@ -282,7 +282,7 @@ python main.py --bootstrap-start 64 --bootstrap-max 128
 
 | 修改 | 是否触发 Q4 robust90/95 策略变化 |
 |---|---|
-| Bonferroni d=3/d=12 修正 | 否（Q4 robust 策略集合与之前相同） |
+| Bonferroni d=3/d=12 修正 | 是（所有 robust90/95 利润值上升；S6 robust90/95 策略从 110000 → 100000） |
 | phase map 三分类 | 否（nominal robust90/robust95 切换点不同，但属同一决策结构） |
 | PoR 分解 | 否（仅报告增强） |
 | 单调性验证 | 否（仅测试） |
@@ -300,15 +300,15 @@ $ python -m compileall -q ..
 
 $ python -m pytest -q ..
 ...............    [100%]
-15 passed in 42.97s
+17 passed
 
-$ python main.py --bootstrap-start 64 --bootstrap-max 128
+$ python main.py --bootstrap-start 64 --bootstrap-max 512
 [0/4] 输出目录: H:\...\结果输出
-[1/4] ... 15 项确定性检验全部通过
+[1/4] ... 17 项确定性检验全部通过
 [2/4] ... 灵敏度 + 三套相图完成
 [3/4] ... Q4 稳健重优化完成
 [4/4] ... Bootstrap 完成
-[FIN] 15 项 PASS, 0 FAIL
+[FIN] 17 项 PASS, 0 FAIL
 ```
 
 总耗时：159.29 s。

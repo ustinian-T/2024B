@@ -1,0 +1,3 @@
+﻿scenario_id,profit_using_d3,profit_using_d30_counter_factual,actual_csv_robust90_profit,abs_diff_d3_minus_actual,abs_diff_d30_minus_actual,verdict
+1,14.496971714724118,12.410256088926431,14.496971714724118,0.0,2.0867156257976873,Q4 uses d=3 (per-scope)
+2,6.269714225227666,2.9947343398128154,6.269714225227666,0.0,3.274979885414851,Q4 uses d=3 (per-scope)

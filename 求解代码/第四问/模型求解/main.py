@@ -50,7 +50,8 @@ from src.q4_uncertainty import (  # noqa: E402
 from src.q4_validation import (  # noqa: E402
     audit_q2_monotonicity, audit_q3_monotonicity, decode_diff_smoke,
     exact_cp_coverage_validation, family_scope_validation,
-    optimal_profit_monotonicity_validation, phase_map_nominal_regression,
+    family_scope_value_equivalence, optimal_profit_monotonicity_validation,
+    phase_map_nominal_regression, phase_map_robust_consistency_check,
     q1_sequential_boundary_validation, q2_closed_form_validation,
     q3_handcheck_validation, regression_q2, regression_q3,
     robust_corner_check_q2, robust_corner_check_q3,
@@ -346,11 +347,13 @@ def print_final_summary(rep: Reporter, out: Path, summary: dict, elapsed: float)
         ("cp_coverage_pass", "CP 精确覆盖率 ≥ 名义水平"),
         ("q1_sequential_boundary_pass", "Q1 序贯接收/拒收边界正确"),
         ("q1_sequential_coverage_pass", "Q1 序贯 CS MC 覆盖率合格"),
-        ("q2_monotonicity_pass", "Q2 稳健单调性审计"),
-        ("q3_monotonicity_pass", "Q3 稳健单调性审计"),
         ("family_scope_pass", "Bonferroni 族规模 Q2 d=3 / Q3 d=12"),
+        ("family_scope_value_equivalence_pass", "Q4 实际使用 d=3 (per-scope)"),
         ("optimal_profit_monotonicity_pass", "最优利润随 L/pF 单调非增"),
+        ("q2_monotonicity_pass", "Q2 单调性审计全部 PASS"),
+        ("q3_monotonicity_pass", "Q3 单调性审计全部 PASS"),
         ("phase_map_nominal_regression_pass", "Q3 nominal phase map 切换 pF≈0.1248"),
+        ("phase_map_robust_consistency_pass", "Q3 robust95 phase map 行为正确"),
         ("robust_corner_check_q2_pass", "Q2 top-k 策略 upper corner 为最坏"),
         ("robust_corner_check_q3_pass", "Q3 top-k 策略 upper corner 为最坏"),
         ("decode_diff_smoke_pass", "策略位差 smoke 测试"),
@@ -434,6 +437,25 @@ def run_regression(out: Path, rep: Reporter) -> tuple[dict, pd.DataFrame, pd.Dat
             r = sub.iloc[0]
             print(f"    [{scope:<32}] U95={r['actual_U95']:.10f}（期望 {r['expected_U95']:.10f}）")
 
+    rep.step("★ 族规模值等价性核验（Q4 实际使用 d=3）", "1.8b")
+    fsve = family_scope_value_equivalence()
+    save(fsve, out / "validation_family_scope_value_equivalence.csv")
+    rep.info(f"全部 verdict = d=3: {bool((fsve['verdict'] == 'Q4 uses d=3 (per-scope)').all())}")
+    for _, r in fsve.iterrows():
+        print(f"    S{r['scenario_id']}: d=3 利润 {float(r['profit_using_d3']):.4f} "
+              f"vs 实际 {float(r['actual_csv_robust90_profit']):.4f}（差距 {float(r['abs_diff_d3_minus_actual']):.4f}）"
+              f"；d=30 对照 {float(r['profit_using_d30_counter_factual']):.4f}（差距 {float(r['abs_diff_d30_minus_actual']):.4f}）")
+
+    rep.step("★ Q3 robust95 phase map 行为核验", "1.10b")
+    pmrc = phase_map_robust_consistency_check()
+    save(pmrc, out / "validation_phase_map_robust_consistency.csv")
+    rep.info(f"全部 4 项 PASS: {bool(pmrc['PASS'].all())}")
+    for _, r in pmrc.iterrows():
+        if pd.notna(r.get("actual_policy16")):
+            print(f"    [{r['check']:<32}] 实际 {r['actual_policy16']}（期望 {r['expected_policy16']}）")
+        else:
+            print(f"    [{r['check']:<32}] 阈值 {float(r['actual_threshold']):.4f}")
+
     rep.step("★ 最优利润单调性（关键经济单调性）", "1.9")
     opm = optimal_profit_monotonicity_validation()
     save(opm, out / "validation_optimal_profit_monotonicity.csv")
@@ -456,8 +478,10 @@ def run_regression(out: Path, rep: Reporter) -> tuple[dict, pd.DataFrame, pd.Dat
         "q1_sequential_boundary_pass": bool(seqb["PASS"].all()),
         "q1_sequential_coverage_pass": bool(seqcov["PASS"].all()),
         "family_scope_pass": bool(fs["PASS"].all()),
+        "family_scope_value_equivalence_pass": bool((fsve["verdict"] == "Q4 uses d=3 (per-scope)").all()),
         "optimal_profit_monotonicity_pass": bool(opm["PASS"].all()),
         "phase_map_nominal_regression_pass": bool(pmr["PASS"].all()),
+        "phase_map_robust_consistency_pass": bool(pmrc["PASS"].all()),
     }, q2r, q3r
 
 
@@ -646,6 +670,13 @@ def run_q4_robust(
 
 
 def main() -> int:
+    # Windows 控制台默认 GBK，无法编码 ⚠ 等 Unicode；强制 UTF-8 输出避免 UnicodeEncodeError。
+    for _stream in (sys.stdout, sys.stderr):
+        if hasattr(_stream, "reconfigure"):
+            try:
+                _stream.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
     ap = argparse.ArgumentParser(
         description="2024 B 题 问题四：抽样不确定性 + Q2/Q3 稳健重优化"
     )

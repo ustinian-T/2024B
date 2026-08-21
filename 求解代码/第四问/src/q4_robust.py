@@ -434,7 +434,8 @@ def bootstrap_stability_q2(
                     converged = False; break
                 if abs(curr_snapshot["stability_rate"] - prev_snapshot["stability_rate"]) > 2 * ((curr_snapshot["mc_se"] ** 2 + prev_snapshot["mc_se"] ** 2) ** 0.5):
                     converged = False; break
-        if converged:
+        # 收敛判定仅在达到 max_B 之后才允许提前终止，保证最终 B >= max_B（默认 512）。
+        if converged and total >= max_B:
             break
         checkpoint = min(max_B, max(checkpoint * 2, total + 1))
     return pd.DataFrame(rows)
@@ -461,42 +462,41 @@ def bootstrap_stability_q3(
     while total < max_B:
         add = min(checkpoint - total, max_B - total)
         for _ in range(add):
-            boot, c = _bootstrap_once_records(base_records, rng, max_seq_n)
+            while True:
+                boot, c = _bootstrap_once_records(base_records, rng, max_seq_n)
+                bm = {r.quality_id: r for r in boot}
+                mapped_b = {k: bm[v.quality_id] for k, v in mapped.items()}
+                _, ph, u90, u95 = _interval_vectors(mapped_b, family_size=12)
+                try:
+                    for risk, q in [("nominal", ph), ("robust90", u90), ("robust95", u95)]:
+                        code, profit, _ = solve_q3_fast(q, topk=2)
+                        counts[risk][code] += 1
+                        unique[risk].add(code)
+                        profits[risk].append(profit)
+                    break
+                except ValueError:
+                    # 极端抽样（k*=n → defect_rate=1.0）无法求解，重抽本样本。
+                    continue
             censored += c
-            bm = {r.quality_id: r for r in boot}
-            mapped_b = {k: bm[v.quality_id] for k, v in mapped.items()}
-            _, ph, u90, u95 = _interval_vectors(mapped_b, family_size=12)
-            for risk, q in [("nominal", ph), ("robust90", u90), ("robust95", u95)]:
-                code, profit, _ = solve_q3_fast(q, topk=2)
-                counts[risk][code] += 1
-                unique[risk].add(code)
-                profits[risk].append(profit)
         total += add
-        try:
-            for risk in counts:
-                code, nc = counts[risk].most_common(1)[0]
-                rate = nc / total
-                se = (rate * (1 - rate) / total) ** 0.5
-                arr = np.array(profits[risk])
-                rows.append({
-                    "scope": "Q3",
-                    "risk_level": risk,
-                    "B": total,
-                    "modal_policy": code,
-                    "stability_rate": rate,
-                    "mc_se": se,
-                    "mean_optimal_profit": float(arr.mean()) if len(arr) > 0 else np.nan,
-                    "std_optimal_profit": float(arr.std(ddof=1)) if len(arr) > 1 else np.nan,
-                    "unique_strategy_count": int(len(unique[risk])),
-                    "sequential_censored_events": censored,
-                    "data_source": data_source,
-                })
-        except ValueError as e:
-            # Bootstrap 出现极端抽到（k/n=1）→ 跳过本轮
-            rows.append({"scope": "Q3", "B": total, "status": f"bootstrap batch skipped: {e}",
-                         "data_source": data_source})
-            checkpoint = min(max_B, max(checkpoint * 2, total + 1))
-            continue
+        for risk in counts:
+            code, nc = counts[risk].most_common(1)[0]
+            rate = nc / total
+            se = (rate * (1 - rate) / total) ** 0.5
+            arr = np.array(profits[risk])
+            rows.append({
+                "scope": "Q3",
+                "risk_level": risk,
+                "B": total,
+                "modal_policy": code,
+                "stability_rate": rate,
+                "mc_se": se,
+                "mean_optimal_profit": float(arr.mean()) if len(arr) > 0 else np.nan,
+                "std_optimal_profit": float(arr.std(ddof=1)) if len(arr) > 1 else np.nan,
+                "unique_strategy_count": int(len(unique[risk])),
+                "sequential_censored_events": censored,
+                "data_source": data_source,
+            })
         converged = True
         if total < 2 * start_B:
             converged = False
@@ -508,7 +508,8 @@ def bootstrap_stability_q3(
                     converged = False; break
                 if curr["modal_policy"] != prev_snapshot["modal_policy"] or abs(curr["stability_rate"] - prev_snapshot["stability_rate"]) > 2 * ((curr["mc_se"] ** 2 + prev_snapshot["mc_se"] ** 2) ** 0.5):
                     converged = False; break
-        if converged:
+        # 收敛判定仅在达到 max_B 之后才允许提前终止，保证最终 B >= max_B（默认 512）。
+        if converged and total >= max_B:
             break
         checkpoint = min(max_B, max(checkpoint * 2, total + 1))
     return pd.DataFrame(rows)
