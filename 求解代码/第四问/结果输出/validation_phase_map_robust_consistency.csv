@@ -1,0 +1,5 @@
+﻿check,actual_policy16,expected_policy16,PASS,note,actual_threshold,expected_threshold_range
+pF=0.10_yF_should_be_0,1111111111111101,1111111111111101,True,其他节点已在 U95 上界，但 pF=0.10 < 临界 0.15，F 检测不划算,,
+pF=0.20_yF_should_be_1,1111111111111111,1111111111111111,True,pF=0.20 > 临界 0.15，F 检测开启,,
+pF=0.10_L=40_yF_should_be_0,1111111111111101,1111111111111101,True,虽然 L=40 大，但 pF=0.10 不足以触发 F 检测,,
+robust95_phase_map_L40_switch_pF,,,True,在 L=40、其他节点=U95 条件下，pF*≈0.15（与手册 b_F/(p_F*L)=6/40 一致）,0.14999999999999963,"(0.14, 0.16)"

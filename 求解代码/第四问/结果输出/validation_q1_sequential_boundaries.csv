@@ -1,0 +1,4 @@
+﻿check,actual_E_minus,threshold_for_accept,PASS,actual_E_plus,threshold_for_reject,actual_U90,reference_p0
+accept_boundary_n34_k0,10.015605145524672,10.0,True,,,,
+reject_boundary_n2_k2,,,True,36.99999999999998,20.0,,
+inverted_U90_n34_k0,,,True,,,0.09994580768881857,0.1

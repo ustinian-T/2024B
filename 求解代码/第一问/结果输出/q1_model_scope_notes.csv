@@ -1,0 +1,3 @@
+﻿item,status
+finite_population,未提供批量 N：主模型保持 Bernoulli/Binomial，不执行超几何修正。
+measurement_error,未提供检测灵敏度 Se/特异度 Sp：按题意默认检测结果可正确识别，不虚构误检参数。
