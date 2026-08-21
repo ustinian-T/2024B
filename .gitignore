@@ -1,3 +1,12 @@
 __pycache__/
 *.pyc
 *.pyo
+.claude/
+temp_*.txt
+latex/_q2_concl_tmp.txt
+latex/~$*.docx
+latex/2024B (1).pdf
+latex/*.aux
+latex/*.log
+latex/*.out
+latex/*.synctex.gz
