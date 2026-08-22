@@ -1,0 +1,18 @@
+﻿parameter,actual,threshold,rule,baseline_side
+replacement_loss_L,40.0,60.0,检测成品 iff L > b_F/p_F,不检测
+final_process_defect_pF,0.1,0.15,检测成品 iff p_F > b_F/L,不检测
+inspect_cost_C1,1.0,2.2222222222222223,检测零件 iff b_i < b_i*（局部最优条件）,检测
+inspect_cost_C2,1.0,2.2222222222222223,检测零件 iff b_i < b_i*（局部最优条件）,检测
+inspect_cost_C3,2.0,2.2222222222222223,检测零件 iff b_i < b_i*（局部最优条件）,检测
+inspect_cost_C4,1.0,2.2222222222222223,检测零件 iff b_i < b_i*（局部最优条件）,检测
+inspect_cost_C5,1.0,2.2222222222222223,检测零件 iff b_i < b_i*（局部最优条件）,检测
+inspect_cost_C6,2.0,2.2222222222222223,检测零件 iff b_i < b_i*（局部最优条件）,检测
+inspect_cost_C7,1.0,2.2222222222222223,检测零件 iff b_i < b_i*（局部最优条件）,检测
+inspect_cost_C8,2.0,2.2222222222222223,检测零件 iff b_i < b_i*（局部最优条件）,检测
+inspect_cost_H1,4.0,7.1604938271604945,检测半成品 iff b_H < b_H*（基准其余节点已知合格）,检测
+inspect_cost_H2,4.0,7.1604938271604945,检测半成品 iff b_H < b_H*（基准其余节点已知合格）,检测
+inspect_cost_H3,4.0,7.1604938271604945,检测半成品 iff b_H < b_H*（基准其余节点已知合格）,检测
+disassembly_cost_H1,6.0,28.888888888888886,拆解半成品 iff d_H < 子零件已知合格重置价值,拆解
+disassembly_cost_H2,6.0,28.888888888888886,拆解半成品 iff d_H < 子零件已知合格重置价值,拆解
+disassembly_cost_H3,6.0,25.555555555555557,拆解半成品 iff d_H < 子零件已知合格重置价值,拆解
+disassembly_cost_F,10.0,125.33333333333333,拆解成品 iff d_F < 三个已知合格半成品重置价值,拆解

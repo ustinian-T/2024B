@@ -1,0 +1,2 @@
+﻿n_orders,seed,mean_profit,sample_sd,standard_error,ci95_low,ci95_high,mean_component_attempts_each,mean_semi_attempts_total,mean_semi_failures_total,mean_final_attempts,mean_replacements,mean_final_disassemblies
+200000,20260820,60.179945,25.29172973829471,0.05655402696337994,60.06909910715177,60.29079089284822,1.11133125,3.335025,0.335025,1.111215,0.111215,0.111215

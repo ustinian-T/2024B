@@ -1,0 +1,2 @@
+﻿n_orders,seed,mean_profit,sample_sd,standard_error,ci95_low,ci95_high,mean_purchase,mean_component_inspection,mean_semi_assembly,mean_semi_inspection,mean_semi_disassembly,mean_final_assembly,mean_final_inspection,mean_replacement,mean_final_disassembly
+10000,20260821,60.1195,25.51321054162361,0.2551321054162361,59.61944107338418,60.619558926615824,8.8794,8.8794,3.339,3.339,0.339,1.1136,0.0,0.1136,0.1136

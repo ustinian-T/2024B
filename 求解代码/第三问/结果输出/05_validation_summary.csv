@@ -1,0 +1,16 @@
+﻿test,passed,metric,target
+manual_target_policy,True,1111111111111101,1111111111111101
+manual_target_cost,True,139.77777777777777,139.77777777777777
+manual_target_profit,True,60.22222222222223,60.22222222222222
+hand_closed_form_vs_exact,True,0.0,<1e-10
+tree_dp_vs_flat_policy,True,1111111111111101,1111111111111101
+tree_dp_vs_flat_profit,True,0.0,<1e-10
+cost_breakdown_sum_vs_scalar,True,2.842170943040401e-14,<1e-10
+vectorized_mc_ci_contains_theory,True,"[60.069099, 60.290791]",contains 60.222222
+generic_event_mc_ci_contains_theory,True,"[59.619441, 60.619559]",contains 60.222222
+mc_event_count_mean_component_attempts_each,True,0.00022013888888894328,abs error < 0.01
+mc_event_count_mean_semi_attempts_total,True,0.001691666666666869,abs error < 0.01
+mc_event_count_mean_semi_failures_total,True,0.0016916666666666469,abs error < 0.01
+mc_event_count_mean_final_attempts,True,0.00010388888888890335,abs error < 0.01
+mc_event_count_mean_replacements,True,0.0001038888888888756,abs error < 0.01
+mc_event_count_mean_final_disassemblies,True,0.0001038888888888756,abs error < 0.01
