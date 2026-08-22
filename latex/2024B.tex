@@ -1476,19 +1476,27 @@ P_e = P_a - P_b, \quad P_f = P_d - P_c, \quad P_g = P_a - P_c, \quad P_h = P_d.
 	
 	
 	
-\section{文件列表}
+\section{支撑材料文件清单}
+
 \begin{table}[H]
 \centering
-\begin{tabularx}{\textwidth}{LL}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{L L}
 \toprule
-文件名   & 功能描述 \\
+\textbf{文件名} & \textbf{功能描述} \\
 \midrule
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-数据预处理.py & 预处理程序代码 \\
-q2.py & 问题二程序代码 \\
-q3.c & 问题三程序代码 \\
-q4.cpp & 问题四程序代码 \\
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\texttt{q1\_model.py} & 问题一：e-process 序贯抽样模型与精确二项检验 \\
+\texttt{q2\_model.py} & 问题二：Bellman 生产循环状态方程与 64 策略枚举 \\
+\texttt{q3\_model\_refactored.py} & 问题三：BOM 分层递推与 $2^{16}$ 策略全枚举 \\
+\texttt{Q4\_main\_model.py} & 问题四：Bonferroni 校正与系统置信集稳健重优化 \\
+\midrule
+\texttt{generate\_all\_figures.m} & 问题一：五张论文图的一键生成入口 \\
+\texttt{q2\_generate\_all\_figures\_v5\_2.m} & 问题二：v5.2 版六图统一生成脚本 \\
+\texttt{q3\_generate\_figures.m} & 问题三：图2--图6 严格版独立生成函数 \\
+\texttt{generate\_q4\_figures.m} & 问题四：稳健优化论文图表一键生成入口 \\
+\midrule
+\texttt{Q2\_color.m} & 第二/三问共用自然色板定义函数 \\
+\texttt{Q2\_style.m} & 第二/三问共用字体/字号/线宽样式函数 \\
 \bottomrule
 \end{tabularx}
 \label{tab:文件列表}
@@ -1511,20 +1519,20 @@ q4.cpp & 问题四程序代码 \\
                      & 95\% & 1101/110111 & 42.16 & 13.84 \\
 \midrule
 \multirow{3}{*}{S2} & 名义 & 1101/110111 & 44.00 & 12.00 \\
-                     & 90\% & 1101/110111 & 49.73 & 6.27 \\
-                     & 95\% & 1101/110111 & 50.77 & 5.23 \\
+                     & 90\% & 1101/110111 & 49.73 &  6.27 \\
+                     & 95\% & 1101/110111 & 50.77 &  5.23 \\
 \midrule
 \multirow{3}{*}{S3} & 名义 & 1011/101111 & 39.53 & 16.47 \\
                      & 90\% & 1111/111111 & 43.99 & 12.01 \\
                      & 95\% & 1111/111111 & 44.61 & 11.39 \\
 \midrule
 \multirow{3}{*}{S4} & 名义 & 1111/111111 & 41.25 & 14.75 \\
-                     & 90\% & 1111/111111 & 46.14 & 9.86 \\
-                     & 95\% & 1111/111111 & 47.02 & 8.98 \\
+                     & 90\% & 1111/111111 & 46.14 &  9.86 \\
+                     & 95\% & 1111/111111 & 47.02 &  8.98 \\
 \midrule
 \multirow{3}{*}{S5} & 名义 & 0101/010111 & 41.04 & 14.96 \\
-                     & 90\% & 0111/011111 & 47.89 & 8.11 \\
-                     & 95\% & 0111/011111 & 49.06 & 6.94 \\
+                     & 90\% & 0111/011111 & 47.89 &  8.11 \\
+                     & 95\% & 0111/011111 & 49.06 &  6.94 \\
 \midrule
 \multirow{3}{*}{S6} & 名义 & 0000/000000 & 34.32 & 21.68 \\
                      & 90\% & 1000/100000 & 40.06 & 15.94 \\
@@ -1535,26 +1543,34 @@ q4.cpp & 问题四程序代码 \\
 
 
 \newpage
+\section{问题一代码}
 
-%\section{代码}
-%\noindent 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%数据预处理.py
-%\lstinputlisting[language=python]{code/1.数据预处理.py}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%q2.py
-%\lstinputlisting[language=python]{code/q2.py}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%
-%q3.c
-%\lstinputlisting[language=c]{code/q3.c}
-%
-%
-%q4.cpp
-%\lstinputlisting[language=c++]{code/q4.cpp}
+\lstinputlisting[language=Python, caption={问题一核心模型节选}, label={code:q1},
+    linerange={49-86, 209-270, 934-962}]
+    {2024B 支撑材料/q1_model.py}
+\newpage
+\section{问题二代码}
+
+\lstinputlisting[language=Python, caption={问题二核心模型节选}, label={code:q2},
+    linerange={115-186, 343-470}]
+    {2024B 支撑材料/q2_model.py}
+\newpage
+\section{问题三代码}
+
+\lstinputlisting[language=Python, caption={问题三核心模型节选}, label={code:q3},
+    linerange={53-117, 193-290, 491-520}]
+    {2024B 支撑材料/q3_model_refactored.py}
+\newpage
+\section{问题四代码}
+
+\lstinputlisting[language=Python, caption={问题四核心模型节选}, label={code:q4},
+    linerange={170-180, 526-672}]
+    {2024B 支撑材料/Q4_main_model.py}
+
+
+
+
+
 
 \end{appendices}
 \end{document}
